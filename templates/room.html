@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ room }} - DjChat{% endblock %}
+
+{% block content %}
+<h2>{{ room }} - DjChat</h2>
+
+<div id="display"></div>
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+<script>
+$(document).ready(function(){
+    setInterval(function(){
+        $.ajax({
+            type: 'GET',
+            url : "/getMessages/{{ room }}/",
+            success: function(response){
+                $("#display").empty();
+                response.messages.forEach(function(message) {
+                    var temp = "<div class='container darker'><b>" + message.user + "</b><p>" + message.value + "</p><span class='time-left'>" + message.date + "</span></div>";
+                    $("#display").append(temp);
+                });
+            },
+            error: function(){
+                alert('An error occurred');
+            }
+        });
+    }, 1000);
+});
+
+$(document).on('submit', '#post-form', function(e){
+    e.preventDefault();
+
+    $.ajax({
+        type: 'POST',
+        url: '/send',
+        data: {
+            username: $('#username').val(),
+            room_id: $('#room_id').val(),
+            message: $('#message').val(),
+            csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+        },
+        success: function(){
+            $('#message').val('');
+        }
+    });
+});
+</script>
+
+<div class="container">
+    <form id="post-form">
+        {% csrf_token %}
+        <input type="hidden" name="username" id="username" value="{{ username }}" />
+        <input type="hidden" name="room_id" id="room_id" value="{{ room_details.id }}" />
+        <input type="text" name="message" id="message" required />
+        <input type="submit" value="Send">
+    </form>
+</div>
+{% endblock %}
